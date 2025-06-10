@@ -38,7 +38,7 @@
             --search-focus-ring-color: #4f46e5;
             --focus-ring-color: #4f46e5;
             --header-box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            --header-sticky-box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* More pronounced for sticky */
+            --header-sticky-box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         }
 
         .dark-mode {
@@ -183,7 +183,7 @@
             top: 0;
             left: 0;
             right: 0;
-            box-shadow: var(--header-sticky-box-shadow); /* More pronounced shadow when sticky */
+            box-shadow: var(--header-sticky-box-shadow);
             z-index: 1000;
         }
 
@@ -240,10 +240,8 @@
             color: var(--sidebar-text-color);
             padding: 1.5rem 0.75rem;
             position: fixed;
-            /* top value will be set by JS */
             left: -280px;
             width: 280px;
-            /* height value will be set by JS */
             overflow-y: auto;
             transition: left 0.3s ease-in-out, top 0.3s ease-in-out, height 0.3s ease-in-out;
             z-index: 900;
@@ -292,22 +290,22 @@
             margin-bottom: 1.5rem; padding-bottom: 0.75rem;
             border-bottom: 2px solid var(--border-color);
         }
-        /* Make title focusable but without the default ring */
         .category-title:focus {
             outline: none;
         }
+
         .flashcards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
-            align-items: stretch; /* ROBUSTNESS FIX: ensure cards in a row have same height */
+            align-items: stretch;
         }
         .flashcard-article.hidden { display: none; }
 
         .flashcard-container {
             perspective: 1000px;
             width: 100%;
-            height: 100%; /* Works reliably now with parent's align-items: stretch */
+            height: 100%;
             min-height: 280px;
             cursor: pointer;
             display: flex;
@@ -401,6 +399,14 @@
         #backToTopBtn:hover { background-color: var(--button-hover-bg-color); transform: translateY(-2px); }
         #backToTopBtn:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 
+        /* UX IMPROVEMENT: Style for the "no results" message */
+        #noResultsMessage {
+            color: var(--text-color);
+        }
+        #noResultsMessage.hidden {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
@@ -408,7 +414,6 @@
 
     <div id="bookPromoHeader">
         <div class="book-cover">
-            <!-- Fallback added to prevent missing image issues -->
             <img src="images/book_cover.png"
                  alt="Book Cover: How to Talk to Anyone"
                  onerror="this.onerror=null;this.src='https://placehold.co/200x300/6366f1/ffffff?text=Book+Cover';">
@@ -445,7 +450,13 @@
             <ul id="sidebarNav"></ul>
         </nav>
         <main id="mainContentContainer" tabindex="-1">
-            </main>
+            <!-- Content will be rendered here by JavaScript -->
+            <!-- UX IMPROVEMENT: Container for "No results found" message -->
+            <div id="noResultsMessage" class="hidden text-center p-8">
+                <h3 class="text-2xl font-bold mb-2">No Results Found</h3>
+                <p>No tricks matched your search term. Please try again with different keywords.</p>
+            </div>
+        </main>
     </div>
 
     <button id="backToTopBtn" title="Back to top" aria-label="Back to top">
@@ -455,121 +466,6 @@
     </button>
 
     <script>
-        const allFlashcardsData = [
-            // Part One
-            { frontTitle: "1. How to Make Your Smile Magically Different", backTitle: "The Flooding Smile", description: "Don’t flash an immediate smile when you greet someone, as though anyone who walked into your line of sight would be the beneficiary. Instead, look at the other person’s face for a second. Pause. Soak in their persona. Then let a big, warm, responsive smile flood over your face and overflow into your eyes. It will engulf the recipient like a warm wave. The split-second delay convinces people your flooding smile is genuine and only for them." },
-            { frontTitle: "2. How to Strike Everyone as Intelligent and Insightful by Using Your Eyes", backTitle: "Sticky Eyes", description: "Pretend your eyes are glued to your conversation partner’s with sticky warm taffy. Don’t break eye contact even after he or she has finished speaking. When you must look away, do it ever so slowly, reluctantly, stretching the gooey taffy until the tiny string finally breaks." },
-            { frontTitle: "3. How to Use Your Eyes to Make Someone Fall in Love with You", backTitle: "Epoxy Eyes", description: "This brazen technique packs a powerful punch. Watch your target person even when someone else is talking. No matter who is speaking, keep looking at the man or woman you want to impact." },
-            { frontTitle: "4. How to Look Like a Big Winner Wherever You Go", backTitle: "Hang by Your Teeth", description: "Visualize a circus iron-jaw bit hanging from the frame of every door you walk through. Take a bite and, with it firmly between your teeth, let it swoop you to the peak of the big top. When you hang by your teeth, every muscle is stretched into perfect posture position." },
-            { frontTitle: "5. How to Win Their Heart by Responding to Their \"Inner Infant\"", backTitle: "The Big-Baby Pivot", description: "Give everyone you meet The Big-Baby Pivot. The instant the two of you are introduced, reward your new acquaintance. Give the warm smile, the total-body turn, and the undivided attention you would give a tiny tyke who crawled up to your feet, turned a precious face up to yours, and beamed a big toothless grin. Pivoting 100 percent toward the new person shouts \"I think you are very, very special.\"" },
-            { frontTitle: "6. How to Make Someone Feel Like an Old Friend at Once", backTitle: "Hello Old Friend", description: "When meeting someone, imagine he or she is an old friend (an old customer, an old beloved, or someone else you had great affection for). How sad, the vicissitudes of life tore you two asunder. But, holy mackerel, now the party (the meeting, the convention) has reunited you with your long-lost old friend! The joyful experience starts a remarkable chain reaction in your body from the subconscious softening of your eyebrows to the positioning of your toes—and everything between." },
-            { frontTitle: "7. How to Come Across as 100 Percent Credible to Everyone", backTitle: "Limit the Fidget", description: "Whenever your conversation really counts, let your nose itch, your ear tingle, or your foot prickle. Do not fidget, twitch, wiggle, squirm, or scratch. And above all, keep your paws away from your puss. Hand motions near your face and all fidgeting can give your listener the gut feeling you’re fibbing." },
-            { frontTitle: "8. How to Read People Like You Have ESP", backTitle: "Hans’s Horse Sense", description: "Make it a habit to get on a dual track while talking. Express yourself, but keep a keen eye on how your listener is reacting to what you’re saying. Then plan your moves accordingly. If a horse can do it, so can a human. People will say you pick up on everything. You never miss a trick. You’ve got horse sense." },
-            { frontTitle: "9. How to Make Sure You Don’t Miss a Single Beat", backTitle: "Watch the Scene Before You Make the Scene", description: "Rehearse being the Super Somebody you want to be ahead of time. SEE yourself walking around with Hang by Your Teeth posture, shaking hands, smiling the Flooding Smile, and making Sticky Eyes. HEAR yourself chatting comfortably with everyone. FEEL the pleasure of knowing you are in peak form and everyone is gravitating toward you. VISUALIZE yourself a Super Somebody. Then it all happens automatically." },
-            // Part Two
-            { frontTitle: "10. How to Start Great Small Talk", backTitle: "Make a Mood Match", description: "Before opening your mouth, take a \"voice sample\" of your listener to detect his or her state of mind. Take a \"psychic photograph\" of the expression to see if your listener looks buoyant, bored, or blitzed. If you ever want to bring people around to your thoughts, you must match their mood and voice tone, if only for a moment." },
-            { frontTitle: "11. How to Sound Like You’ve Got a Super Personality (No Matter What You’re Saying!)", backTitle: "Prosaic with Passion", description: "Worried about your first words? Fear not, because 80 percent of your listener’s impression has nothing to do with your words anyway. Almost anything you say at first is fine. No matter how prosaic the text, an empathetic mood, a positive demeanor, and passionate delivery make you sound exciting." },
-            { frontTitle: "12. How to Make People Want to Start a Conversation with You", backTitle: "Always Wear a Whatzit", description: "Whenever you go to a gathering, wear or carry something unusual to give people who find you the delightful stranger across the crowded room an excuse to approach. \"Excuse me, I couldn’t help but notice your . . . what IS that?\"" },
-            { frontTitle: "13. How to Meet the People You Want to Meet", backTitle: "Whoozat", description: "Whoozat is the most effective, least used (by non-politicians) meeting-people device ever contrived. Simply ask the party giver to make the introduction, or pump for a few facts that you can immediately turn into icebreakers." },
-            { frontTitle: "14. How to Break into a Tight Crowd", backTitle: "Eavesdrop In", description: "No Whatzit? No host for Whoozat? No problem! Just sidle up behind the swarm of folks you want to infiltrate and open your ears. Wait for any flimsy excuse and jump in with \"Excuse me, I couldn’t help but overhear. . . .\" Will they be taken aback? Momentarily. Will they get over it? Momentarily. Will you be in the conversation? Absolutely!" },
-            { frontTitle: "15. How to Make \"Where Are You From?\" Sound Exciting", backTitle: "Never the Naked City", description: "Whenever someone asks you the inevitable, \"And where are you from?\" never, ever, unfairly challenge their powers of imagination with a one-word answer. Learn some engaging facts about your hometown that conversational partners can comment on. Then, when they say something clever in response to your bait, they think you’re a great conversationalist." },
-            { frontTitle: "16. How to Come Out a Winner Every Time They Ask, \"And What Do You Do?\"", backTitle: "Never the Naked Job", description: "When asked the inevitable \"And what do you do,\" you may think \"I’m an economist/an educator/an engineer\" is giving enough information to engender good conversation. However, to one who is not an economist, educator, or an engineer, you might as well be saying \"I’m a paleontologist/psychoanalyst/pornographer.\" Flesh it out. Throw out some delicious facts about your job for new acquaintances to munch on. Otherwise, they’ll soon excuse themselves, preferring the snacks back at the cheese tray." },
-            { frontTitle: "17. How to Introduce People Like the Host(ess) with the Most(est)", backTitle: "Never the Naked Introduction", description: "When introducing people, don’t throw out an unbaited hook and stand there grinning like a big clam, leaving the newlymets to flutter their fins and fish for a topic. Bait the conversational hook to get them in the swim of things. Then you’re free to stay or float on to the next networking opportunity." },
-            { frontTitle: "18. How to Resuscitate a Dying Conversation", backTitle: "Be a Word Detective", description: "Like a good gumshoe, listen to your conversation partner’s every word for clues to his or her preferred topic. The evidence is bound to slip out. Then spring on that subject like a sleuth on to a slip of the tongue. Like Sherlock Holmes, you have the clue to the subject that’s hot for the other person." },
-            { frontTitle: "19. How to Enthrall 'Em with Your Choice of Topic—Them!", backTitle: "The Swiveling Spotlight", description: "When you meet someone, imagine a giant revolving spotlight between you. When you’re talking, the spotlight is on you. When the new person is speaking, it’s shining on him or her. If you shine it brightly enough, the stranger will be blinded to the fact that you have hardly said a word about yourself. The longer you keep it shining away from you, the more interesting he or she finds you." },
-            { frontTitle: "20. How to Never Need to Wonder, \"What Do I Say Next?\"", backTitle: "Parroting", description: "Never be left speechless again. Like a parrot, simply repeat the last few words your conversation partner says. That puts the ball right back in his or her court, and then all you need to do is listen." },
-            { frontTitle: "21. How to Get 'Em Happily Chatting (So You Can Slip Away if You Want To!)", backTitle: "Encore!", description: "The sweetest sound a performer can hear welling up out of the applause is \"Encore! Encore! Let’s hear it again!\" The sweetest sound your conversation partner can hear from your lips when you’re talking with a group of people is \"Tell them about the time you . . .\" Whenever you’re at a meeting or party with someone important to you, think of some stories he or she told you. Choose an appropriate one from their repertoire that the crowd will enjoy. Then shine the spotlight by requesting a repeat performance." },
-            { frontTitle: "22. How to Come Across as a Positive Person", backTitle: "Ac-cen-tu-ate the Pos-i-tive", description: "When first meeting someone, lock your closet door and save your skeletons for later. You and your new good friend can invite the skeletons out, have a good laugh, and dance over their bones later in the relationship. But now’s the time, as the old song says, to \"ac-cen-tu-ate the pos-i-tive and elim-i-nate the neg-a-tive.\"" },
-            { frontTitle: "23. How to Always Have Something Interesting to Say", backTitle: "The Latest News . . . Don’t Leave Home Without It", description: "The last move to make before leaving for the party—even after you’ve given yourself final approval in the mirror—is to turn on the radio news or scan your newspaper. Anything that happened today is good material. Knowing the big-deal news of the moment is also a defensive move that rescues you from putting your foot in your mouth by asking what everybody’s talking about. Foot-in-mouth is not very tasty in public, especially when it’s surrounded by egg-on-face." },
-            // Part Three
-            { frontTitle: "24. How to Find Out What They Do (Without Even Asking!)", backTitle: "What Do You Do—Not!", description: "A sure sign you’re a Somebody is the conspicuous absence of the question, \"What do you do?\" (You determine this, of course, but not with those four dirty words that label you as either a ruthless networker, a social climber, a gold-digging husband or wife hunter, or someone who’s never strolled along Easy Street.)" },
-            { frontTitle: "25. How to Know What to Say When They Ask, \"What Do You Do?\"", backTitle: "The Nutshell Rèsumè", description: "Just as job-seeking top managers roll a different written rèsumè off their printers for each position they’re applying for, let a different true story about your professional life roll off your tongue for each listener. Before responding to \"What do you do?\" ask yourself, \"What possible interest could this person have in my answer? Could he refer business to me? Buy from me? Hire me? Marry my sister? Become my buddy?\" Wherever you go, pack a nutshell about your own life to work into your communications bag of tricks." },
-            { frontTitle: "26. How to Sound Even Smarter Than You Are", backTitle: "Your Personal Thesaurus", description: "Look up some common words you use every day in the thesaurus. Then, like slipping your feet into a new pair of shoes, slip your tongue into a few new words to see how they fit. If you like them, start making permanent replacements. Remember, only fifty words makes the difference between a rich, creative vocabulary and an average, middle-of-the-road one. Substitute a word a day for two months and you’ll be in the verbally elite." },
-            { frontTitle: "27. How to Not Sound Anxious (Let Them Discover Your Similarity)", backTitle: "Kill the Quick \"Me, Too!\"", description: "Whenever you have something in common with someone, the longer you wait to reveal it, the more moved (and impressed) he or she will be. You emerge as a confident big cat, not a lonely little stray, hungry for quick connection with a stranger. P.S.: Don’t wait too long to reveal your shared interest or it will seem like you’re being tricky." },
-            { frontTitle: "28. How to Be a \"You-Firstie\" to Gain Their Respect and Affection", backTitle: "Comm-YOU-nication", description: "Start every appropriate sentence with you. It immediately grabs your listener’s attention. It gets a more positive response because it pushes the pride button and saves them having to translate it into \"me\" terms. When you sprinkle you as liberally as salt and pepper throughout your conversation, your listeners find it an irresistible spice." },
-            { frontTitle: "29. How to Make Them Feel You \"Don’t Smile at Just Anybody\"", backTitle: "The Exclusive Smile", description: "If you flash everybody the same smile, like a Confederate dollar, it loses value. When meeting groups of people, grace each with a distinct smile. Let your smiles grow out of the beauty big players find in each new face. If one person in a group is more important to you than the others, reserve an especially big, flooding smile just for him or her." },
-            { frontTitle: "30. How to Avoid Sounding Like a Jerk", backTitle: "Don’t Touch a Clichè with a Ten-Foot Pole", description: "Be on guard. Don’t use any clichès when chatting with big winners. Don’t even touch one with a ten-foot pole. Never? Not even when hell freezes over? Not unless you want to sound dumb as a doorknob." },
-            { frontTitle: "31. How to Use Motivational Speakers' Techniques to Enhance Your Conversation", backTitle: "Use Jawsmith’s Jive", description: "Whether you’re standing behind a podium facing thousands or behind the barbecue grill facing your family, you’ll move, amuse, and motivate with the same skills. Read speakers' books to cull quotations, pull pearls of wisdom, and get gems to tickle their funny bones. Find a few bon mots to let casually slide off your tongue on chosen occasions. If you want to be notable, dream up a crazy quotable. Make 'em rhyme, make 'em clever, or make 'em funny. Above all, make 'em relevant." },
-            { frontTitle: "32. How to Banter Like the Big Shots Do (Big Winners Tell It Like It Is)", backTitle: "Call a Spade a Spade", description: "Don’t hide behind euphemisms. Call a spade a spade. That doesn’t mean big cats use tasteless four-letter words when perfectly decent five- and six-letter ones exist. They’ve simply learned the King’s English, and they speak it." },
-            { frontTitle: "33. How to Avoid the World’s Worst Conversational Habit", backTitle: "Trash the Teasing", description: "A dead giveaway of a little cat is his or her proclivity to tease. An innocent joke at someone else’s expense may get you a cheap laugh. Nevertheless, the big cats will have the last one. Because you’ll bang your head against the glass ceiling they construct to keep little cats from stepping on their paws. Never, ever, make a joke at anyone else’s expense. You’ll wind up paying for it, dearly." },
-            { frontTitle: "34. How to Give Them the Bad News (and Have Them Like You All the More)", backTitle: "It’s the Receiver’s Ball", description: "A football player wouldn’t last two beats of the time clock if he made blind passes. A pro throws the ball with the receiver always in mind. Before throwing out any news, keep your receiver in mind. Then deliver it with a smile, a sigh, or a sob. Not according to how you feel about the news, but how the receiver will take it." },
-            { frontTitle: "35. How to Respond When You Don’t Want to Answer (and Wish They’d Shut the Heck Up)", backTitle: "The Broken Record", description: "Whenever someone persists in questioning you on an unwelcome subject, simply repeat your original response. Use precisely the same words in precisely the same tone of voice. Hearing it again usually quiets them down. If your rude interrogator hangs on like a leech, your next repetition never fails to flick them off." },
-            { frontTitle: "36. How to Talk to a Celebrity", backTitle: "Big Shots Don’t Slobber", description: "People who are VIPs in their own right don’t slobber over celebrities. When you are chatting with one, don’t compliment her work, simply say how much pleasure or insight it’s given you. If you do single out any one of the star’s accomplishments, make sure it’s a recent one, not a memory that’s getting yellow in her scrapbook. If the queen bee has a drone sitting with her, find a way to involve him in the conversation." },
-            { frontTitle: "37. How to Make Them Want to Thank You", backTitle: "Never the Naked Thank You", description: "Never let the phrase \"thank you\" stand alone. From A to Z, always follow it with for: from \"Thank you for asking\" to \"Thank you for zipping me up.\"" },
-            // Part Four
-            { frontTitle: "38. How to Be a Modern-Day Renaissance Man or Woman", backTitle: "Scramble Therapy", description: "Once a month, scramble your life. Do something you’d never dream of doing. Participate in a sport, go to an exhibition, hear a lecture on something totally out of your experience. You get 80 percent of the right lingo and insider questions from just one exposure." },
-            { frontTitle: "39. How to Sound Like You Know All About Their Job or Hobby", backTitle: "Learn a Little Jobbledygook", description: "Big winners speak Jobbledygook as a second language. What is Jobbledygook? It’s the language of other professions. Why speak it? It makes you sound like an insider. How do you learn it? You’ll find no Jobbledygook cassettes in the language section of your bookstore, but the lingo is easy to pick up. Simply ask a friend who speaks the lingo of the crowd you’ll be with to teach you a few opening questions. The words are few and the rewards are manifold." },
-            { frontTitle: "40. How to Bare Their Hot Button (Elementary Doc-Talk)", backTitle: "Baring Their Hot Button", description: "Before jumping blindly into a bevy of bookbinders or a drove of dentists, find out what the hot issues are in their fields. Every industry has burning concerns the outside world knows little about. Ask your informant to bare the industry buzz. Then, to heat the conversation up, push those buttons." },
-            { frontTitle: "41. How to Secretly Learn About Their Lives", backTitle: "Read Their Rags", description: "Is your next big client a golfer, runner, swimmer, surfer, or skier? Are you attending a social function filled with accountants or Zen Buddhists—or anything in between? There are untold thousands of monthly magazines serving every imaginable interest. You can dish up more information than you’ll ever need to sound like an insider with anyone just by reading the rags that serve their racket. (Have you read your latest copy of Zoonooz yet?)" },
-            { frontTitle: "42. How to Talk When You’re in Other Countries", backTitle: "Clear \"Customs\"", description: "Before putting one toe on foreign soil, get a book on dos and taboos around the world. Before you shake hands, give a gift, make gestures, or even compliment anyone’s possessions, check it out. Your gaffe could gum up your entire gig." },
-            { frontTitle: "43. How to Talk Them into Getting the \"Insider’s Price\" (on Practically Anything You Buy)", backTitle: "Bluffing for Bargains", description: "The haggling skills used in ancient Arab markets are alive and well in contemporary America for big-ticket items. Your price is much lower when you know how to deal. Before every big purchase, find several vendors—a few to learn from and one to buy from. Armed with a few words of industryese, you’re ready to head for the store where you’re going to buy." },
-            // Part Five
-            { frontTitle: "44. How to Make Them Feel You’re of the Same \"Class\"", backTitle: "Be a Copyclass", description: "Watch people. Look at the way they move. Small movements? Big movements? Fast? Slow? Jerky? Fluid? Old? Young? Classy? Trashy? Pretend the person you are talking to is your dance instructor. Is he a jazzy mover? Is she a balletic mover? Watch his or her body, then imitate the style of movement. That makes your conversation partner subliminally real comfy with you." },
-            { frontTitle: "45. How to Make Them Feel That You’re Like \"Family\"", backTitle: "Echoing", description: "Echoing is a simple linguistic technique that packs a powerful wallop. Listen to the speaker’s arbitrary choice of nouns, verbs, prepositions, adjectives—and echo them back. Hearing their words come out of your mouth creates subliminal rapport. It makes them feel you share their values, their attitudes, their interests, their experiences." },
-            { frontTitle: "46. How to Really Make It Clear to Them", backTitle: "Potent Imaging", description: "Does your customer have a garden? Talk about \"sowing the seeds for success.\" Does your boss own a boat? Tell him or her about a concept that will \"hold water\" or \"stay afloat.\" Maybe he is a private pilot? Talk about a concept really \"taking off.\" She plays tennis? Tell her it really hits the \"sweet spot.\" Evoke your listener’s interests or lifestyle and weave images around it. To give your points more power and punch, use analogies from your listener’s world, not your own. Potent Imaging also tells your listeners you think like them and hints you share their interests." },
-            { frontTitle: "47. How to Make Them Feel You Empathize (Without Just Saying \"Yep, Uh Huh, Yeah\")", backTitle: "Employ Empathizers", description: "Don’t be an unconscious ummer. Vocalize complete sentences to show your understanding. Dust your dialogue with phrases like \"I see what you mean.\" Sprinkle it with sentimental sparklers like \"That’s a lovely thing to say.\" Your empathy impresses your listeners and encourages them to continue." },
-            { frontTitle: "48. How to Make Them Think You See/Hear/Feel It Just the Way They Do", backTitle: "Anatomically Correct Empathizers", description: "What part of their anatomy are your associates talking through? Their eyes? Their ears? Their gut? For visual people, use visual empathizers to make them think you see the world the way they do. For auditory folks, use auditory empathizers to make them think you hear them loud and clear. For kinesthetic types, use kinesthetic empathizers to make them think you feel the same way they do." },
-            { frontTitle: "49. How to Make 'Em Think We (Instead of You vs. Me)", backTitle: "The Premature We", description: "Create the sensation of intimacy with someone even if you’ve met just moments before. Scramble the signals in their psyche by skipping conversational levels one and two and cutting right to levels three and four. Elicit intimate feelings by using the magic words we, us, and our." },
-            { frontTitle: "50. How to Create a Friendly \"Private Joke\" with Them", backTitle: "Instant History", description: "When you meet a stranger you’d like to make less a stranger, search for some special moment you shared during your first encounter. Then find a few words that reprieve the laugh, the warm smile, the good feelings the two of you felt. Now, just like old friends, you have a history together, an Instant History. With anyone you’d like to make part of your personal or professional future, look for special moments together. Then make them a refrain." },
-            // Part Six
-            { frontTitle: "51. How to Compliment Someone (Without Sounding Like You’re Brownnosing)", backTitle: "Grapevine Glory", description: "A compliment one hears is never as exciting as the one he overhears. A priceless way to praise is not by telephone, not by telegraph, but by tell-a-friend. This way you escape possible suspicion that you are an apple-polishing, bootlicking, egg-sucking, back-scratching sycophant trying to win brownie points. You also leave recipients with the happy fantasy that you are telling the whole world about their greatness." },
-            { frontTitle: "52. How to Be a \"Carrier Pigeon\" of Good Feelings", backTitle: "Carrier Pigeon Kudos", description: "People immediately grow a beak and metamorphosize themselves into carrier pigeons when there’s bad news. (It’s called gossip.) Instead, become a carrier of good news and kudos. Whenever you hear something complimentary about someone, fly to them with the compliment. Your fans may not posthumously stuff you and put you on display in a museum like Stumpy Joe. But everyone loves the carrier pigeon of kind thoughts." },
-            { frontTitle: "53. How to Make 'Em Feel Your Admiration \"Just Slipped Out\"", backTitle: "Implied Magnificence", description: "Throw a few comments into your conversation that presuppose something positive about the person you’re talking with. But be careful. Don’t blow it like the well-intentioned maintenance man. Or the southern boy who, at the prom, thought he was flattering his date when he told her, \"Gosh, Mary Lou, for a fat gal you dance real good.\"" },
-            { frontTitle: "54. How to Win Their Hearts by Being an \"Undercover Complimenter\"", backTitle: "Accidental Adulation", description: "Become an undercover complimenter. Stealthily sneak praise into the parenthetical part of your sentence. Just don’t try to quiz anyone later on your main point. The joyful jolt of your accidental adulation strikes them temporarily deaf to anything that follows." },
-            { frontTitle: "55. How to Make 'Em Never Forget You with a \"Killer Compliment\"", backTitle: "Killer Compliment", description: "Whenever you are talking with a stranger you’d like to make part of your professional or personal future, search for one attractive, specific, and unique quality he or she has. At the end of the conversation, look the individual right in the eye. Say his or her name and proceed to curl all ten toes with the Killer Compliment." },
-            { frontTitle: "56. How to Make 'Em Smile with \"Itty-Bitty Boosters\"", backTitle: "Little Strokes", description: "Don’t make your colleagues, your friends, your loved ones look at you and silently say, \"Haven’t I been pretty good today?\" Let them know how much you appreciate them by caressing them with verbal Little Strokes like \"Nice job!\" \"Well done!\" \"Cool!\"" },
-            { frontTitle: "57. How to Praise with Perfect Timing", backTitle: "The Knee-Jerk \"Wow!\"", description: "Quick as a blink, you must praise people the moment they a finish a feat. In a wink, like a knee-jerk reaction say, \"You were terrific!\" Don’t worry that they won’t believe you. The euphoria of the moment has a strangely numbing effect on the achiever’s objective judgment." },
-            { frontTitle: "58. How to Make 'Em Want to Compliment You", backTitle: "Boomeranging", description: "Just as a boomerang flies right back to the thrower, let compliments boomerang right back to the giver. Like the French, quickly murmur something that expresses \"That’s very kind of you.\"" },
-            { frontTitle: "59. How to Make a Loved One Feel You Are THE Partner for Life", backTitle: "The Tombstone Game", description: "Ask the important people in your life what they would like engraved on their tombstone. Chisel it into your memory but don’t mention it again. Then, when the moment is right to say \"I appreciate you\" or \"I love you,\" fill the blanks with the very words they gave you weeks earlier. You take people’s breath away when you feed their deepest self-image to them in a compliment. \"At last,\" they say to themselves, \"someone who loves me for who I truly am.\"" },
-            // Part Seven
-            { frontTitle: "60. How to Sound More Exciting on the Phone", backTitle: "Talking Gestures", description: "Think of yourself as the star of a personal radio drama every time you pick up the phone. If you want to come across as engaging as you are, you must turn your smiles into sound, your nods into noise, and all your gestures into something your listener can hear. You must replace your gestures with talk. Then punch up the whole act 30 percent!" },
-            { frontTitle: "61. How to Sound Close (Even if You’re Hundreds of Miles Away)", backTitle: "Name Shower", description: "People perk up when they hear their own name. Use it more often on the phone than you would in person to keep their attention. Your caller’s name re-creates the eye contact, the caress, you might give in person. Saying someone’s name repeatedly when face-to-face sounds pandering. But because there is physical distance between you on the phone—sometimes you’re a continent apart—you can spray your conversation with it." },
-            { frontTitle: "62. How to Make 'Em Happy They Called You", backTitle: "\"Oh Wow, It’s You!\"", description: "Don’t answer the phone with an \"I’m just sooo happy all the time\" attitude. Answer warmly, crisply, and professionally. Then, after you hear who is calling, let a huge smile of happiness engulf your entire face and spill over into your voice. You make your caller feel as though your giant warm fuzzy smile is reserved for him or her." },
-            { frontTitle: "63. How to Sneak Past the Gatekeeper", backTitle: "The Sneaky Screen", description: "If you must screen your calls, instruct your staff to first say cheerfully, \"Oh yes, I’ll put you right through. May I tell her who’s calling?\" If the party has already identified himself, it’s \"Oh of course, Mr. Whoozit. I’ll put you right through.\" When the secretary comes back with the bad news that Mr. or Ms. Bigwig is unavailable, callers don’t take it personally and never feel screened. They fall for it every time, just like I did." },
-            { frontTitle: "64. How to Get What You Want on the Phone from Big Shots", backTitle: "Salute the Spouse", description: "Whenever you are calling someone’s home, always identify and greet the person who answers. Whenever you call someone’s office more than once or twice, make friends with the secretary. Anybody who is close enough to answer the phone is close enough to sway the VIP’s opinion of you." },
-            { frontTitle: "65. How to Get What You Want—by Timing!", backTitle: "What Color Is Your Time?", description: "No matter how urgent you think your call, always begin by asking the person about timing. Either use the What Color Is Your Time? device or simply ask, \"Is this a convenient time for you to talk?\" When you ask about timing first, you’ll never smash your footprints right in the middle of your telephone partner’s sands of time. You’ll never get a \"No!\" just because your timing wasn’t right." },
-            { frontTitle: "66. How to Impress Everyone with Your Outgoing Voicemail Message", backTitle: "Constantly Changing Outgoing Message", description: "If you want to be perceived as conscientious and reliable, leave a short, professional, and friendly greeting as your outgoing message. No music. No jokes. No inspirational messages. No boasts, bells, or whistles. And here’s the secret: change it every day. Your message doesn’t have to be flawless. A little cough or stammer gives a lovely unpretentious reality to your message." },
-            { frontTitle: "67. How to Get Them to Call You Back", backTitle: "Your Ten-Second Audition", description: "While dialing, clear your throat. If an answering machine picks up, pretend the beep is a big Broadway producer saying \"Nexxxt.\" Now you’re on. This is Your Ten-Second Audition to prove you are worthy of a quick callback." },
-            { frontTitle: "68. How to Make the Gatekeeper Think You’re Buddy-Buddy with the VIP", backTitle: "The Ho-Hum Caper", description: "Instead of using your party’s name, casually let the pronoun he or she roll off your tongue. Forget \"Uh, may I speak to Ms. Bigshot please?\" Just announce, \"Hi, Bob Smith here, is she in?\" Tossing the familiar she off your tongue signals to the secretary that you and her boss are old buddies." },
-            { frontTitle: "69. How to Make Them Say You Have Super Sensitivity", backTitle: "\"I Hear Your Other Line\"", description: "When you hear a phone in the background, stop speaking—in midsentence, if necessary—and say \"I hear your other line,\" (or your dog barking, your baby crying, your spouse calling you). Ask whether she has to attend to it. Whether she does or not, she’ll know you’re a top communicator for asking." },
-            { frontTitle: "70. How to \"Listen Between the Lines\" on the Phone", backTitle: "Instant Replay", description: "Record all your business conversations and listen to them again. The second or third time, you pick up on significant subtleties you missed the first time. It’s like football fans who often don’t know if there was a fumble until they see it all over again in Instant Replay." },
-            // Part Eight
-            { frontTitle: "71. How to Avoid the Most Common Party Blooper", backTitle: "Munching or Mingling", description: "Politicians want to be eyeball to eyeball and belly to belly with their constituents. Like any big winner well versed in the science of proxemics and spatial relationships, they know any object except their belt buckle has the effect of a brick wall between two people. Therefore they never hold food or drink at a party. Come to munch or come to mingle. But do not expect to do both. Like a good politician, chow down before you come." },
-            { frontTitle: "72. How to Make an Unforgettable Entrance", backTitle: "Rubberneck the Room", description: "When you arrive at the gathering, stop dramatically in the doorway. Then s-l-o-w-l-y survey the situation. Let your eyes travel back and forth like a SWAT team ready in a heartbeat to wipe out anything that moves." },
-            { frontTitle: "73. How to Meet the People YOU Want to Meet", backTitle: "Be the Chooser, Not the Choosee", description: "The lifelong friend, the love of your life, or the business contact who will transform your future may not be at the party. However, someday, somewhere, he or she will be. Make every party a rehearsal for the big event. Do not stand around waiting for the moment when that special person approaches you. You make it happen by exploring every face in the room. No more \"ships passing in the night.\" Capture whatever or whomever you want in your life." },
-            { frontTitle: "74. How to Subliminally Lure People to You at a Gathering", backTitle: "Come-Hither Hands", description: "Be a human magnet, not a human repellent. When standing at a gathering, arrange your body in an open position—especially your arms and hands. People instinctively gravitate toward open palms and wrists seductively arranged in the \"come hither\" position. They shy away from knuckles in the \"get lost or I’ll punch you\" position. Use your wrists and palms to say \"I have nothing to hide,\" \"I accept you and what you’re saying,\" or \"I find you sexy.\"" },
-            { frontTitle: "75. How to Make 'Em Feel Like a Movie Star", backTitle: "Tracking", description: "Like an air-traffic controller, track the tiniest details of your conversation partners' lives. Refer to them in your conversation like a major news story. It creates a powerful sense of intimacy. When you invoke the last major or minor event in anyone’s life, it confirms the deep conviction that he or she is an old-style hero around whom the world revolves. And people love you for recognizing their stardom." },
-            { frontTitle: "76. How to Amaze Them with What You Remember About Them", backTitle: "The Business Card Dossier", description: "Right after you’ve talked to someone at a party, take out your pen. On the back of his or her business card write notes to remind you of the conversation: his favorite restaurant, sport, movie, or drink; whom she admires, where she grew up, a high school honor; or maybe a joke he told. In your next communication, toss off a reference to the favorite restaurant, sport, movie, drink, hometown, high school honor. Or reprieve the laugh over the great joke." },
-            { frontTitle: "77. How to Make the Sale with Your Eyeballs", backTitle: "Eyeball Selling", description: "The human body is a twenty-four-hour broadcasting station that transmits \"You thrill me.\" \"You bore me.\" \"I love that aspect of your product.\" \"That one puts my feet to sleep.\" Set the hidden cameras behind your eyeballs to pick up on all your customers' and friends' signals. Then plan your pitch and your pace accordingly." },
-            // Part Nine
-            { frontTitle: "78. How to Win Their Affection by Overlooking Their Bloopers", backTitle: "See No Bloopers, Hear No Bloopers", description: "Cool communicators allow their friends, associates, acquaintances, and loved ones the pleasurable myth of being above commonplace bloopers and embarrassing biological functions. They simply don’t notice their comrades' minor spills, slips, fumbles, and faux pas. They obviously ignore raspberries and all other signs of human frailty in their fellow mortals. Big winners never gape at another’s gaffes." },
-            { frontTitle: "79. How to Win Their Heart When Their Tongue Is Faltering", backTitle: "Lend a Helping Tongue", description: "Whenever someone’s story is aborted, let the interruption play itself out. Give everyone time to dote on the little darling, give their dinner order, or pick up the jagged pieces of china. Then, when the group reassembles, simply say to the person who suffered story-interruptus, \"Now please get back to your story.\" Or better yet, remember where they were and then ask, \"So what happened after the . . .\" (and fill in the last few words)." },
-            { frontTitle: "80. How to Let 'Em Know \"What’s in It\" for Them", backTitle: "Bare the Buried WIIFM (and WIIFY)", description: "Whenever you suggest a meeting or ask a favor, divulge the respective benefits. Reveal what’s in it for you and what’s in it for the other person—even if it’s zip. If any hidden agenda comes up later, you get labeled a sly fox." },
-            { frontTitle: "81. How to Make Them Want to Do Favors for You", backTitle: "Let 'Em Savor the Favor", description: "Whenever a friend agrees to a favor, allow your generous buddy time to relish the joy of his or her beneficence before you make them pay the piper. How long? At least twenty-four hours." },
-            { frontTitle: "82. How to Ask for Favors (and Get Them!)", backTitle: "Tit for (Wait . . . Wait) Tat", description: "When you do someone a favor and it’s obvious that \"he owes you one,\" wait a suitable amount of time before asking him to \"pay.\" Let him enjoy the fact (or fiction) that you did it out of friendship. Don’t call in your tit for their tat too swiftly." },
-            { frontTitle: "83. How to Know What Not to Say at Parties", backTitle: "Parties Are for Pratter", description: "There are three sacred safe havens in the human jungle where even the toughest tiger knows he must not attack. The first of these is parties. Parties are for pleasantries and good fellowship, not for confrontations. Big players, even when standing next to their enemies at the buffet table, smile and nod. They leave tough talk for tougher settings." },
-            { frontTitle: "84. How to Know What Not to Say at Dinner", backTitle: "Dinner’s for Dining", description: "The most guarded safe haven respected by big winners is the dining table. Breaking bread together is a time when they bring up no unpleasant matters. While eating, they know it’s OK to brainstorm and discuss the positive side of the business: their dreams, their desires, their designs. They can free associate and come up with new ideas. But no tough business." },
-            { frontTitle: "85. How to Know What Not to Say in a Chance Meeting", backTitle: "Chance Encounters Are for Chitchat", description: "If you’re selling, negotiating, or in any sensitive communication with someone, do NOT capitalize on a chance meeting. Keep the melody of your mistaken meeting sweet and light. Otherwise, it could turn into your swan song with Big Winner." },
-            { frontTitle: "86. How to Prepare Them to Listen to You", backTitle: "Empty Their Tanks", description: "If you need information, let people have their entire say first. Wait patiently until their needle is on empty and the last drop drips out and splashes on the cement. It’s the only way to be sure their tank is empty enough of their own inner noise to start receiving your ideas." },
-            { frontTitle: "87. How to Turn Their Anger Around (in Three Sentences or Less)", backTitle: "Echo the Emo", description: "Facts speak. Emotions shout. Whenever you need facts from people about an emotional situation, let them emote. Hear their facts but empathize like mad with their emotions. Smearing on the emo is often the only way to calm their emotional storm." },
-            { frontTitle: "88. How to Make 'Em Like You (Even When You’ve Messed Up)", backTitle: "My Goof, Your Gain", description: "Whenever you make a boner, make sure your victim benefits. It’s not enough to correct your mistake. Ask yourself, \"What could I do for this suffering soul so he or she will be delighted I made the flub?\" Then do it, fast! In that way, your goof will become your gain." },
-            { frontTitle: "89. How to Trap a Rat with Class", backTitle: "Leave an Escape Hatch", description: "Whenever you catch someone lying, filching, exaggerating, distorting, or deceiving, don’t confront the dirty duck directly. Unless it is your responsibility to catch or correct the culprit—or unless you are saving other innocent victims by doing so—let the transgressor out of your trap with his tricky puss in one piece. Then resolve never to gaze upon it again." },
-            { frontTitle: "90. How to Get Whatever You Want from Service Personnel", backTitle: "Buttercups for Their Boss", description: "Do you have a store clerk, accountant, law firm junior partner, tailor, auto mechanic, maître d', massage therapist, kid’s teacher—or any other worker you want special attention from in the future? The surefire way to make them care enough to give you their very best is send a buttercup to their boss." },
-            { frontTitle: "91. How to Be a Leader in a Crowd, Not a Follower", backTitle: "Lead the Listeners", description: "No matter how prominent the big cat behind the podium is, crouched inside is a little scaredy-cat who is anxious about the crowd’s acceptance. Big winners recognize you’re a fellow big winner when they see you leading their listeners in a positive reaction. Be the first to applaud or publicly commend the man or woman you agree with (or want favors from)." },
-            { frontTitle: "92. How to Make All the Right Moves", backTitle: "The Great Scorecard in the Sky", description: "Any two people have an invisible scorecard hovering above their heads. The numbers continually fluctuate, but one rule remains: player with lower score pays deference to player with higher score. The penalty for not keeping your eye on The Great Scorecard in the Sky is to be thrown out of the game. Permanently." }
-        ];
-        const categories = [
-            { id: "part1", title: "Part 1: Intrigue Without a Word", navTitle: "Part 1: Intrigue Without a Word", start: 1, end: 9 },
-            { id: "part2", title: "Part 2: What to Say After \"Hi\"", navTitle: "Part 2: What to Say After \"Hi\"", start: 10, end: 23 },
-            { id: "part3", title: "Part 3: Talk Like a VIP", navTitle: "Part 3: Talk Like a VIP", start: 24, end: 37 },
-            { id: "part4", title: "Part 4: Be an Insider", navTitle: "Part 4: Be an Insider", start: 38, end: 43 },
-            { id: "part5", title: "Part 5: Sound Like Peas in a Pod", navTitle: "Part 5: Sound Like Peas in a Pod", start: 44, end: 50 },
-            { id: "part6", title: "Part 6: Power of Praise vs. Folly of Flattery", navTitle: "Part 6: Power of Praise vs. Folly of Flattery", start: 51, end: 59 },
-            { id: "part7", title: "Part 7: Direct Dial Their Hearts", navTitle: "Part 7: Direct Dial Their Hearts", start: 60, end: 70 },
-            { id: "part8", title: "Part 8: Work a Party Like a Politician", navTitle: "Part 8: Work a Party Like a Politician", start: 71, end: 77 },
-            { id: "part9", title: "Part 9: Break the Glass Ceiling", navTitle: "Part 9: Break the Glass Ceiling", start: 78, end: 92 }
-        ];
-
         const mainContentContainer = document.getElementById('mainContentContainer');
         const sidebarNav = document.getElementById('sidebarNav');
         const darkModeToggleBtn = document.getElementById('darkModeToggle');
@@ -580,21 +476,33 @@
         const controlsBar = document.getElementById('controlsBar');
         const bookPromoHeader = document.getElementById('bookPromoHeader');
         const appWrapper = document.getElementById('appWrapper');
+        const noResultsMessage = document.getElementById('noResultsMessage');
 
         const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12h2.25m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25 2.25 2.25 0 002.25 2.25 2.25 2.25 0 002.25-2.25A2.25 2.25 0 0012 12z" /></svg>`;
         const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>`;
 
         // --- Utility Functions ---
-        /**
-         * Takes a string and returns an HTML-encoded version to prevent XSS.
-         * @param {string} str The string to encode.
-         * @returns {string} The HTML-encoded string.
-         */
         function htmlEncode(str) {
             if (typeof str !== 'string') return '';
             const temp = document.createElement('div');
             temp.textContent = str;
             return temp.innerHTML;
+        }
+
+        /**
+         * PERFORMANCE IMPROVEMENT: Throttles a function to run at most once per limit.
+         */
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (!inThrottle) {
+                    func.apply(context, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            }
         }
 
         // --- Dark Mode ---
@@ -610,13 +518,11 @@
                     darkModeToggleBtn.setAttribute('aria-label', 'Switch to dark mode');
                 }
             }
-
             darkModeToggleBtn.addEventListener('click', () => {
                 const isDarkMode = document.documentElement.classList.toggle('dark-mode');
                 setDarkMode(isDarkMode);
                 localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
             });
-
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
             if (localStorage.getItem('darkMode') === 'enabled' || (localStorage.getItem('darkMode') === null && prefersDark.matches)) {
                 setDarkMode(true);
@@ -636,29 +542,22 @@
                 const isOpen = sidebarContainer.classList.toggle('open');
                 hamburgerMenuBtn.setAttribute('aria-expanded', isOpen.toString());
                 if (isOpen) {
-                    const firstLink = sidebarNav.querySelector('a');
-                    if (firstLink) setTimeout(() => firstLink.focus(), 50);
+                    setTimeout(() => sidebarNav.querySelector('a')?.focus(), 50);
                 } else {
                    setTimeout(() => hamburgerMenuBtn.focus(), 50);
                 }
             });
-
             sidebarNav.addEventListener('click', (event) => {
                 if (event.target.tagName === 'A' && window.innerWidth < 768) {
-                    // ACCESSIBILITY FIX: Focus the relevant section title after navigation
-                    const anchorId = event.target.getAttribute('href'); // e.g., "#part1"
-                    const targetTitle = document.querySelector(`${anchorId}-title`); // e.g., "#part1-title"
-
+                    const anchorId = event.target.getAttribute('href');
+                    const targetTitle = document.querySelector(`${anchorId}-title`);
                     sidebarContainer.classList.remove('open');
                     hamburgerMenuBtn.setAttribute('aria-expanded', 'false');
-
                     if (targetTitle) {
-                        // Use a small timeout to ensure content is visible before focusing
                         setTimeout(() => targetTitle.focus({ preventScroll: true }), 50);
                     }
                 }
             });
-
             document.addEventListener('click', (event) => {
                 if (window.innerWidth < 768 && sidebarContainer.classList.contains('open')) {
                     if (!sidebarContainer.contains(event.target) && !hamburgerMenuBtn.contains(event.target) && !controlsBar.contains(event.target)) {
@@ -669,65 +568,33 @@
             });
         }
 
-        // --- Active Sidebar Link Highlighting (Intersection Observer) ---
+        // --- Active Sidebar Link Highlighting ---
         let intersectionObserver;
         function setupIntersectionObserverForSidebar() {
             if (intersectionObserver) intersectionObserver.disconnect();
-
             const sections = Array.from(mainContentContainer.querySelectorAll('.category-section'));
             const sidebarLinks = Array.from(sidebarNav.querySelectorAll('a'));
-
             if (sections.length === 0 || sidebarLinks.length === 0) return;
-
             const observerOptions = {
                 root: null,
                 rootMargin: '0px 0px -60% 0px',
                 threshold: 0.01
             };
-
-            let activeSetByObserver = false;
-
             intersectionObserver = new IntersectionObserver((entries) => {
-                activeSetByObserver = false;
-                entries.forEach(entry => {
-                    const id = entry.target.getAttribute('id');
+                const activeEntry = entries.find(entry => entry.isIntersecting);
+                sidebarLinks.forEach(link => link.classList.remove('active'));
+                if (activeEntry) {
+                    const id = activeEntry.target.getAttribute('id');
                     const correspondingLink = sidebarNav.querySelector(`a[href="#${id}"]`);
-                    if (entry.isIntersecting) {
-                        sidebarLinks.forEach(link => link.classList.remove('active'));
-                        if (correspondingLink) {
-                            correspondingLink.classList.add('active');
-                            activeSetByObserver = true;
-                        }
-                    }
-                });
-                // Fallback if no section is "active" (e.g., scrolled to top/bottom past all sections)
-                if (!activeSetByObserver) {
-                    // Check if near top or bottom of the page
-                    const firstSectionTop = sections[0] ? sections[0].offsetTop : 0;
-                    const lastSection = sections[sections.length -1];
-                    const lastSectionBottom = lastSection ? lastSection.offsetTop + lastSection.offsetHeight : document.body.scrollHeight;
-
-                    sidebarLinks.forEach(link => link.classList.remove('active')); // Clear all first
-
-                    if (window.scrollY <= firstSectionTop + 50 ) { // Near top or above first section
-                        const firstCategoryLink = sidebarNav.querySelector(`a[href="#${sections[0].id}"]`);
-                        if (firstCategoryLink) firstCategoryLink.classList.add('active');
-                    } else if ((window.innerHeight + window.scrollY) >= lastSectionBottom - 50) { // Near bottom or past last section
-                        const lastCategoryLink = sidebarNav.querySelector(`a[href="#${lastSection.id}"]`);
-                        if (lastCategoryLink) lastCategoryLink.classList.add('active');
-                    }
+                    correspondingLink?.classList.add('active');
                 }
-
             }, observerOptions);
-
-            sections.forEach(section => {
-                intersectionObserver.observe(section);
-            });
+            sections.forEach(section => intersectionObserver.observe(section));
         }
 
         // --- Flashcard Rendering ---
-        function renderFlashcardsAndSidebar() {
-            mainContentContainer.innerHTML = '';
+        function renderFlashcardsAndSidebar(categories, allFlashcardsData) {
+            const fragment = document.createDocumentFragment();
             sidebarNav.innerHTML = '';
 
             categories.forEach(category => {
@@ -748,57 +615,44 @@
                 categoryTitleElement.id = `${category.id}-title`;
                 categoryTitleElement.className = 'category-title';
                 categoryTitleElement.textContent = category.title;
-                categoryTitleElement.setAttribute('tabindex', '-1'); // ACCESSIBILITY FIX: Make title programmatically focusable
+                categoryTitleElement.setAttribute('tabindex', '-1');
                 section.appendChild(categoryTitleElement);
 
                 const grid = document.createElement('div');
                 grid.className = 'flashcards-grid';
 
                 allFlashcardsData.slice(category.start - 1, category.end).forEach((cardData, i) => {
-                    const uniqueCardId = `${category.id}-card-${i}`;
                     const article = document.createElement('article');
                     article.className = 'flashcard-article';
-                    article.setAttribute('data-front-title', (cardData.frontTitle || '').toLowerCase());
-                    article.setAttribute('data-back-title', (cardData.backTitle || '').toLowerCase());
-                    article.setAttribute('data-description', (cardData.description || '').toLowerCase());
+                    article.setAttribute('data-keywords', `${(cardData.frontTitle || '')} ${(cardData.backTitle || '')} ${(cardData.description || '')}`.toLowerCase());
 
                     const flashcardContainer = document.createElement('div');
                     flashcardContainer.className = 'flashcard-container';
-
                     const flashcard = document.createElement('div');
                     flashcard.className = 'flashcard';
                     flashcard.setAttribute('tabindex', '0');
                     flashcard.setAttribute('role', 'button');
                     flashcard.setAttribute('aria-pressed', 'false');
-                    flashcard.setAttribute('aria-labelledby', `${uniqueCardId}-front-content`);
-
 
                     const frontFace = document.createElement('div');
                     frontFace.className = 'flashcard-face flashcard-front';
-
                     const originalFrontTitle = cardData.frontTitle || '';
                     const numberMatch = originalFrontTitle.match(/^(\d+\.)\s*/);
                     let cardNumberText = '';
                     let mainTitleText = originalFrontTitle;
-
                     if (numberMatch && numberMatch[0]) {
                         cardNumberText = numberMatch[1];
                         mainTitleText = originalFrontTitle.substring(numberMatch[0].length);
                     }
-
-                    let frontHTML = '';
-                    if (cardNumberText) {
-                        frontHTML += `<span class="flashcard-number">${htmlEncode(cardNumberText)}</span>`;
-                    }
-                    frontHTML += `<div class="flashcard-front-title-text" id="${uniqueCardId}-front-content">${htmlEncode(mainTitleText)}</div>`;
-                    frontFace.innerHTML = frontHTML;
+                    frontFace.innerHTML = `
+                        <span class="flashcard-number">${htmlEncode(cardNumberText)}</span>
+                        <div class="flashcard-front-title-text">${htmlEncode(mainTitleText)}</div>`;
 
                     const backFace = document.createElement('div');
                     backFace.className = 'flashcard-face flashcard-back';
                     backFace.innerHTML = `<p class="flashcard-description">${htmlEncode(cardData.description) || 'No description available.'}</p>`;
 
-                    flashcard.appendChild(frontFace);
-                    flashcard.appendChild(backFace);
+                    flashcard.append(frontFace, backFace);
                     flashcardContainer.appendChild(flashcard);
                     article.appendChild(flashcardContainer);
                     grid.appendChild(article);
@@ -816,25 +670,23 @@
                     });
                 });
                 section.appendChild(grid);
-                mainContentContainer.appendChild(section);
+                fragment.appendChild(section);
             });
-            if (typeof setupIntersectionObserverForSidebar === 'function') {
-                setupIntersectionObserverForSidebar();
-            }
+            // Append all sections at once to reduce reflows
+            mainContentContainer.prepend(fragment);
         }
 
         // --- Back to Top Button ---
         function setupBackToTopButton() {
-            window.addEventListener('scroll', () => {
+            const throttledScrollHandler = throttle(() => {
                 if (window.scrollY > 300) {
                     backToTopBtn.classList.add('show');
                 } else {
                     backToTopBtn.classList.remove('show');
                 }
-            });
-            backToTopBtn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
+            }, 150);
+            window.addEventListener('scroll', throttledScrollHandler);
+            backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
         }
 
         // --- Search Functionality ---
@@ -842,107 +694,145 @@
             searchInput.addEventListener('input', (e) => {
                 const searchTerm = e.target.value.toLowerCase().trim();
                 const allCardArticles = mainContentContainer.querySelectorAll('.flashcard-article');
+                let resultsFound = false;
 
                 allCardArticles.forEach(cardArticle => {
-                    const frontData = cardArticle.dataset.frontTitle || '';
-                    const backTitleData = cardArticle.dataset.backTitle || '';
-                    const descriptionData = cardArticle.dataset.description || '';
-
-                    if (frontData.includes(searchTerm) ||
-                        backTitleData.includes(searchTerm) ||
-                        descriptionData.includes(searchTerm)) {
-                        cardArticle.classList.remove('hidden');
-                    } else {
-                        cardArticle.classList.add('hidden');
-                    }
+                    const keywords = cardArticle.dataset.keywords || '';
+                    const isVisible = searchTerm === '' || keywords.includes(searchTerm);
+                    cardArticle.classList.toggle('hidden', !isVisible);
+                    if(isVisible) resultsFound = true;
                 });
 
                 document.querySelectorAll('.category-section').forEach(section => {
                     const visibleCards = section.querySelectorAll('.flashcard-article:not(.hidden)');
-                    const categoryTitle = section.querySelector('.category-title');
-                    if (searchTerm && visibleCards.length === 0) {
-                        categoryTitle.classList.add('hidden');
-                    } else {
-                        categoryTitle.classList.remove('hidden');
-                    }
+                    section.classList.toggle('hidden', visibleCards.length === 0);
                 });
-                if (typeof setupIntersectionObserverForSidebar === 'function') {
-                    setTimeout(setupIntersectionObserverForSidebar, 50); // Re-evaluate active links after filter
+
+                noResultsMessage.classList.toggle('hidden', resultsFound || searchTerm === '');
+                setTimeout(setupIntersectionObserverForSidebar, 50);
+            });
+        }
+
+        // --- Sticky Controls Bar ---
+        function setupStickyControlsBar() {
+            const updateVisuals = () => {
+                const promoHeaderHeight = bookPromoHeader.offsetHeight;
+                const controlsBarHeight = controlsBar.offsetHeight;
+                const scrollY = window.scrollY;
+                if (scrollY > promoHeaderHeight) {
+                    controlsBar.classList.add('controls-bar-sticky');
+                    appWrapper.style.paddingTop = `${controlsBarHeight}px`;
+                } else {
+                    controlsBar.classList.remove('controls-bar-sticky');
+                    appWrapper.style.paddingTop = '0px';
+                }
+                if (window.innerWidth >= 768) {
+                    const isSticky = controlsBar.classList.contains('controls-bar-sticky');
+                    const newTop = isSticky ? controlsBarHeight : promoHeaderHeight + controlsBarHeight;
+                    sidebarContainer.style.top = `${newTop}px`;
+                    sidebarContainer.style.height = `calc(100vh - ${newTop}px)`;
+                } else {
+                    sidebarContainer.style.top = '';
+                    sidebarContainer.style.height = '';
+                }
+            };
+            const throttledUpdate = throttle(updateVisuals, 100);
+            window.addEventListener('scroll', throttledUpdate, { passive: true });
+            window.addEventListener('resize', throttledUpdate);
+            const promoImage = bookPromoHeader.querySelector('img');
+            if (promoImage?.complete) {
+                updateVisuals();
+            } else {
+                promoImage?.addEventListener('load', updateVisuals);
+                promoImage?.addEventListener('error', updateVisuals);
+            }
+        }
+
+        /**
+         * ACCESSIBILITY IMPROVEMENT: Allows arrow key navigation between flashcards.
+         */
+        function setupFlashcardKeyboardNav() {
+            mainContentContainer.addEventListener('keydown', (event) => {
+                const activeElement = document.activeElement;
+                if (!activeElement.classList.contains('flashcard') || !['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+                    return;
+                }
+                event.preventDefault();
+
+                const allVisibleCards = Array.from(mainContentContainer.querySelectorAll('.flashcard-article:not(.hidden) .flashcard'));
+                const currentIndex = allVisibleCards.indexOf(activeElement);
+                if (currentIndex === -1) return;
+
+                let nextIndex = -1;
+                switch(event.key) {
+                    case 'ArrowRight':
+                        nextIndex = currentIndex + 1;
+                        break;
+                    case 'ArrowLeft':
+                        nextIndex = currentIndex - 1;
+                        break;
+                    // Note: Up/Down are simplified and may not match grid perfectly
+                    case 'ArrowDown': {
+                        const rect = activeElement.getBoundingClientRect();
+                        // Find a card below the current one, roughly in the same column
+                        for (let i = currentIndex + 1; i < allVisibleCards.length; i++) {
+                            const nextRect = allVisibleCards[i].getBoundingClientRect();
+                            if (nextRect.top > rect.bottom - 10 && Math.abs(nextRect.left - rect.left) < rect.width / 2) {
+                                nextIndex = i;
+                                break;
+                            }
+                        }
+                        if (nextIndex === -1) nextIndex = currentIndex + 1; // fallback
+                        break;
+                    }
+                    case 'ArrowUp': {
+                        const rect = activeElement.getBoundingClientRect();
+                         // Find a card above the current one, roughly in the same column
+                        for (let i = currentIndex - 1; i >= 0; i--) {
+                             const prevRect = allVisibleCards[i].getBoundingClientRect();
+                             if (prevRect.bottom < rect.top + 10 && Math.abs(prevRect.left - rect.left) < rect.width / 2) {
+                                 nextIndex = i;
+                                 break;
+                             }
+                        }
+                        if (nextIndex === -1) nextIndex = currentIndex - 1; // fallback
+                        break;
+                    }
+                }
+
+                if (nextIndex >= 0 && nextIndex < allVisibleCards.length) {
+                    allVisibleCards[nextIndex].focus();
                 }
             });
         }
 
-        // --- Sliver App Bar / Sticky Controls Bar Logic ---
-        function setupStickyControlsBar() {
-            const promoHeader = document.getElementById('bookPromoHeader');
-            const controlsBar = document.getElementById('controlsBar');
-            const appWrapper = document.getElementById('appWrapper');
-            const sidebar = document.getElementById('sidebarContainer');
+        /**
+         * Main app initializer
+         */
+        async function main() {
+            try {
+                // MAINTAINABILITY: Fetch data from external JSON file
+                const response = await fetch('./data.json');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const { categories, flashcards } = await response.json();
 
-            if (!promoHeader || !controlsBar || !appWrapper || !sidebar) {
-                console.error("Sticky header elements not found, cannot initialize sticky behavior.");
-                return;
-            }
-
-            function updateVisuals() {
-                const promoHeaderHeight = promoHeader.offsetHeight;
-                const controlsBarHeight = controlsBar.offsetHeight;
-                const scrollY = window.scrollY;
-
-                if (scrollY > promoHeaderHeight) {
-                    if (!controlsBar.classList.contains('controls-bar-sticky')) {
-                        controlsBar.classList.add('controls-bar-sticky');
-                        appWrapper.style.paddingTop = `${controlsBarHeight}px`;
-                    }
-                } else {
-                    if (controlsBar.classList.contains('controls-bar-sticky')) {
-                        controlsBar.classList.remove('controls-bar-sticky');
-                        appWrapper.style.paddingTop = '0px';
-                    }
-                }
-
-                // CRITICAL BUG FIX: This block now correctly handles sidebar positioning on scroll AND resize.
-                if (window.innerWidth >= 768) {
-                    // This logic runs for desktop view
-                    const isSticky = controlsBar.classList.contains('controls-bar-sticky');
-                    const newTop = isSticky ? controlsBarHeight : promoHeaderHeight + controlsBarHeight;
-                    const newHeight = `calc(100vh - ${newTop}px)`;
-
-                    sidebar.style.top = `${newTop}px`;
-                    sidebar.style.height = newHeight;
-                } else {
-                    // This logic runs for mobile view, resetting any inline styles from desktop.
-                    sidebar.style.top = '';
-                    sidebar.style.height = '';
-                }
-            }
-
-            window.addEventListener('scroll', updateVisuals, { passive: true });
-            window.addEventListener('resize', updateVisuals);
-
-            const promoImage = promoHeader.querySelector('img');
-            if (promoImage) {
-                if (promoImage.complete) {
-                    updateVisuals(); // Initial call
-                } else {
-                    promoImage.onload = updateVisuals;
-                    promoImage.onerror = updateVisuals; // Also run if image fails to load
-                }
-            } else {
-                 updateVisuals(); // Initial call if no image
+                renderFlashcardsAndSidebar(categories, flashcards);
+                setupDarkMode();
+                setupSidebar();
+                setupBackToTopButton();
+                setupSearch();
+                setupStickyControlsBar();
+                setupFlashcardKeyboardNav();
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                mainContentContainer.innerHTML = `<div class="text-center p-8">
+                    <h3 class="text-2xl font-bold mb-2 text-red-500">Error Loading Application</h3>
+                    <p>Could not load the flashcard data. Please check your connection and try again.</p>
+                </div>`;
             }
         }
 
-
-        // --- Initialize App ---
-        document.addEventListener('DOMContentLoaded', () => {
-            renderFlashcardsAndSidebar();
-            setupDarkMode();
-            setupSidebar();
-            setupBackToTopButton();
-            setupSearch();
-            setupStickyControlsBar();
-        });
+        document.addEventListener('DOMContentLoaded', main);
     </script>
 </body>
 </html>
