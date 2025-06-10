@@ -177,13 +177,9 @@
             box-sizing: border-box;
             box-shadow: var(--header-box-shadow);
             transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
-        }
-        .header-container.controls-bar-sticky {
-            position: fixed;
+            position: -webkit-sticky;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            box-shadow: var(--header-sticky-box-shadow);
             z-index: 1000;
         }
 
@@ -246,6 +242,14 @@
             transition: left 0.3s ease-in-out, top 0.3s ease-in-out, height 0.3s ease-in-out;
             z-index: 900;
             border-right: 1px solid var(--border-color);
+
+            /* MOBILE-FIRST DEFAULT: Fixed position for the slide-in overlay */
+            position: fixed;
+            left: -280px;
+            top: 0; /* Start at the top of the viewport by default */
+            height: 100vh; /* Cover the full screen height */
+            transition: left 0.3s ease-in-out; /* Animate the slide-in */
+            z-index: 1001;             
         }
         #sidebarContainer.open { left: 0; }
         .dark-mode #sidebarContainer { border-right-color: var(--border-color); }
@@ -406,6 +410,20 @@
         #noResultsMessage.hidden {
             display: none;
         }
+
+        /* DESKTOP OVERRIDE: Switch to sticky positioning for desktop layout */
+        @media (min-width: 768px) {
+            #sidebarContainer {
+                /* On desktop, it becomes part of the document flow */
+                position: -webkit-sticky;
+                position: sticky;
+                left: 0; /* It's always visible */
+                /* Stick it relative to the height of the sticky header (4.5rem) */
+                top: 4.5rem;
+                /* Ensure its height fills the remaining viewport */
+                height: calc(100vh - 4.5rem);
+            }
+        }             
 
     </style>
 </head>
@@ -722,48 +740,43 @@
             });
         }
 
-// --- Sticky Controls Bar ---
-function setupStickyControlsBar() {
-            const updateVisuals = () => {
-                const promoHeaderHeight = bookPromoHeader.offsetHeight;
-                const controlsBarHeight = controlsBar.offsetHeight;
-                const scrollY = window.scrollY;
-
-                // Set sticky class for the controls bar
-                if (scrollY > promoHeaderHeight) {
-                    controlsBar.classList.add('controls-bar-sticky');
-                    appWrapper.style.paddingTop = `${controlsBarHeight}px`;
-                } else {
-                    controlsBar.classList.remove('controls-bar-sticky');
-                    appWrapper.style.paddingTop = '0px';
+        // --- Smart Sticky Controls Bar for Mobile ---
+        function setupStickyControlsBar() {
+            const updateMobileSidebarPosition = () => {
+                // This function ONLY affects mobile layouts
+                if (window.innerWidth >= 768) {
+                    // On desktop, clear any inline styles and let CSS handle it
+                    sidebarContainer.style.top = '';
+                    sidebarContainer.style.height = '';
+                    return; 
                 }
 
-                // --- OPTIMIZED LOGIC ---
-                // This unified logic now runs on ALL screen sizes.
-                // It dynamically calculates the sidebar's top position and height.
-                const isSticky = controlsBar.classList.contains('controls-bar-sticky');
+                const controlsBar = document.getElementById('controlsBar');
+                const controlsBarHeight = controlsBar.offsetHeight;
                 
-                // If the header is sticky, the sidebar starts below it.
-                // If not, it starts below the combined height of the promo and header bars.
-                const newTop = isSticky ? controlsBarHeight : promoHeaderHeight + controlsBarHeight;
+                // Get the position of the header relative to the viewport
+                const controlsBarRect = controlsBar.getBoundingClientRect();
 
-                sidebarContainer.style.top = `${newTop}px`;
-                sidebarContainer.style.height = `calc(100vh - ${newTop}px)`;
+                // If the top of the controlsBar is at or near the top of the viewport, it's sticky
+                const isSticky = controlsBarRect.top <= 1;
+
+                if (isSticky) {
+                    // On mobile, when the header is sticky, align the sidebar below it
+                    sidebarContainer.style.top = `${controlsBarHeight}px`;
+                    sidebarContainer.style.height = `calc(100vh - ${controlsBarHeight}px)`;
+                } else {
+                    // When not sticky, reset the sidebar to its default full-height state
+                    sidebarContainer.style.top = '0px';
+                    sidebarContainer.style.height = '100vh';
+                }
             };
 
-            // Use a throttled updater for performance
-            const throttledUpdate = throttle(updateVisuals, 100);
-            window.addEventListener('scroll', throttledUpdate, { passive: true });
-            window.addEventListener('resize', throttledUpdate);
-
-            // Run once on load after ensuring the promo image is loaded
-            const promoImage = bookPromoHeader.querySelector('img');
-            if (promoImage?.complete) {
-                updateVisuals();
-            } else {
-                promoImage?.addEventListener('load', updateVisuals);
-                promoImage?.addEventListener('error', updateVisuals);
-            }
+            // Run the logic on scroll and resize
+            window.addEventListener('scroll', updateMobileSidebarPosition, { passive: true });
+            window.addEventListener('resize', updateMobileSidebarPosition);
+            
+            // Run once on load
+            updateMobileSidebarPosition();
         }
 
         /**
