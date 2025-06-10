@@ -535,7 +535,7 @@
                  }
             });
         }
-        
+
         // --- Sidebar ---
         function setupSidebar() {
             hamburgerMenuBtn.addEventListener('click', () => {
@@ -832,6 +832,7 @@
                 setupSearch();
                 setupStickyControlsBar();
                 setupFlashcardKeyboardNav();
+                setupIntersectionObserverForSidebar();
             } catch (error) {
                 console.error('Failed to initialize app:', error);
                 mainContentContainer.innerHTML = `<div class="text-center p-8">
