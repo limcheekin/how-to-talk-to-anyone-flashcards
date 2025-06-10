@@ -411,7 +411,7 @@
             display: none;
         }
 
-        /* DESKTOP OVERRIDE: Switch to sticky positioning for desktop layout */
+        /* DESKTOP OVERRIDE: Switch to sticky positioning and fix layout */
         @media (min-width: 768px) {
             #sidebarContainer {
                 /* On desktop, it becomes part of the document flow */
@@ -422,8 +422,15 @@
                 top: 4.5rem;
                 /* Ensure its height fills the remaining viewport */
                 height: calc(100vh - 4.5rem);
+                /* Ensure the width is explicitly set */
+                width: 330px; 
             }
-        }             
+
+            #mainContentContainer {
+                margin-left: 0px;
+                padding: 1.5rem 2rem; /* Restore original padding */
+            }
+        }        
 
     </style>
 </head>
