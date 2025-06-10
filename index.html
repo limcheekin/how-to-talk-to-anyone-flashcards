@@ -722,12 +722,14 @@
             });
         }
 
-        // --- Sticky Controls Bar ---
-        function setupStickyControlsBar() {
+// --- Sticky Controls Bar ---
+function setupStickyControlsBar() {
             const updateVisuals = () => {
                 const promoHeaderHeight = bookPromoHeader.offsetHeight;
                 const controlsBarHeight = controlsBar.offsetHeight;
                 const scrollY = window.scrollY;
+
+                // Set sticky class for the controls bar
                 if (scrollY > promoHeaderHeight) {
                     controlsBar.classList.add('controls-bar-sticky');
                     appWrapper.style.paddingTop = `${controlsBarHeight}px`;
@@ -735,19 +737,26 @@
                     controlsBar.classList.remove('controls-bar-sticky');
                     appWrapper.style.paddingTop = '0px';
                 }
-                if (window.innerWidth >= 768) {
-                    const isSticky = controlsBar.classList.contains('controls-bar-sticky');
-                    const newTop = isSticky ? controlsBarHeight : promoHeaderHeight + controlsBarHeight;
-                    sidebarContainer.style.top = `${newTop}px`;
-                    sidebarContainer.style.height = `calc(100vh - ${newTop}px)`;
-                } else {
-                    sidebarContainer.style.top = '';
-                    sidebarContainer.style.height = '';
-                }
+
+                // --- OPTIMIZED LOGIC ---
+                // This unified logic now runs on ALL screen sizes.
+                // It dynamically calculates the sidebar's top position and height.
+                const isSticky = controlsBar.classList.contains('controls-bar-sticky');
+                
+                // If the header is sticky, the sidebar starts below it.
+                // If not, it starts below the combined height of the promo and header bars.
+                const newTop = isSticky ? controlsBarHeight : promoHeaderHeight + controlsBarHeight;
+
+                sidebarContainer.style.top = `${newTop}px`;
+                sidebarContainer.style.height = `calc(100vh - ${newTop}px)`;
             };
+
+            // Use a throttled updater for performance
             const throttledUpdate = throttle(updateVisuals, 100);
             window.addEventListener('scroll', throttledUpdate, { passive: true });
             window.addEventListener('resize', throttledUpdate);
+
+            // Run once on load after ensuring the promo image is loaded
             const promoImage = bookPromoHeader.querySelector('img');
             if (promoImage?.complete) {
                 updateVisuals();
