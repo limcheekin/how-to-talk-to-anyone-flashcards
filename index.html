@@ -548,13 +548,22 @@
                 }
             });
             sidebarNav.addEventListener('click', (event) => {
-                if (event.target.tagName === 'A' && window.innerWidth < 768) {
-                    const anchorId = event.target.getAttribute('href');
-                    const targetTitle = document.querySelector(`${anchorId}-title`);
-                    sidebarContainer.classList.remove('open');
-                    hamburgerMenuBtn.setAttribute('aria-expanded', 'false');
-                    if (targetTitle) {
-                        setTimeout(() => targetTitle.focus({ preventScroll: true }), 50);
+                // MODIFICATION START: Provide immediate feedback on click
+                if (event.target.tagName === 'A') {
+                    // Remove active class from all links and add to the clicked one for instant UX feedback.
+                    // The IntersectionObserver will handle subsequent scrolling updates.
+                    sidebarNav.querySelectorAll('a').forEach(link => link.classList.remove('active'));
+                    event.target.classList.add('active');
+                // MODIFICATION END
+
+                    if (window.innerWidth < 768) {
+                        const anchorId = event.target.getAttribute('href');
+                        const targetTitle = document.querySelector(`${anchorId}-title`);
+                        sidebarContainer.classList.remove('open');
+                        hamburgerMenuBtn.setAttribute('aria-expanded', 'false');
+                        if (targetTitle) {
+                            setTimeout(() => targetTitle.focus({ preventScroll: true }), 50);
+                        }
                     }
                 }
             });
@@ -823,6 +832,7 @@
                 setupSearch();
                 setupStickyControlsBar();
                 setupFlashcardKeyboardNav();
+                setupIntersectionObserverForSidebar();
             } catch (error) {
                 console.error('Failed to initialize app:', error);
                 mainContentContainer.innerHTML = `<div class="text-center p-8">
